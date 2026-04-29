@@ -7,7 +7,7 @@ import {
 import z from "zod";
 import { User } from "../models/User.model.js";
 import type { ApiResponse } from "../lib/ApiResponse.js";
-
+import type { ObjectId } from "mongoose";
 
 export const registerUser = async (
   req: Request,
@@ -24,7 +24,7 @@ export const registerUser = async (
         success: false,
         message: "Invalid Data",
       };
-      res.status(400).json(response);
+      return res.status(400).json(response);
     }
 
     //check schema
@@ -37,7 +37,7 @@ export const registerUser = async (
         message: pretty || "Invalid Data",
       };
 
-      res.status(400).json(response);
+      return res.status(400).json(response);
     }
 
     const data = parsedData.data;
@@ -53,7 +53,7 @@ export const registerUser = async (
         success: false,
         message: "User or Email already Exists",
       };
-      res.status(409).json(response);
+    return  res.status(409).json(response);
     }
 
     const existingUsername = await User.findOne({ username });
@@ -63,7 +63,7 @@ export const registerUser = async (
         success: false,
         message: "Username already Exists",
       };
-      res.status(409).json(response);
+    return  res.status(409).json(response);
     }
 
     //password hash => done in pre method
@@ -83,22 +83,23 @@ export const registerUser = async (
           success: false,
           message: "Something Went wrong while saving user",
         };
-        res.status(500).json(response);
+       return res.status(500).json(response);
       }
 
       //deleting refinedData before registering the user
       const refinedData: any = user;
       delete refinedData.password;
 
-      const existingUser = await User.findById(user?._id).select("-password -__v -role");
-      
+      const existingUser = await User.findById(user?._id).select(
+        "-password -__v -role",
+      );
 
       const response: ApiResponse = {
         success: true,
         message: "User created successfully",
         data: existingUser,
       };
-     return res.status(201).json(response);
+      return res.status(201).json(response);
     }
   } catch (err) {
     console.error(err);
@@ -108,11 +109,15 @@ export const registerUser = async (
       message: "Something went wrong",
       error: err instanceof Error ? err.message : err,
     };
-    res.status(500).json(response);
+    return res.status(500).json(response);
   }
 };
 
-export const loginUser = async (req: Request, res: Response, next: NextFunction) => {
+export const loginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
   try {
     //STEP 1: getbody
     const body = req.body;
@@ -123,7 +128,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         success: false,
         message: "Invalid Data",
       };
-      res.status(400).json(response);
+     return res.status(400).json(response);
     }
 
     // STEP 3: check schema
@@ -135,7 +140,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         message: pretty || "Invalid Data",
       };
 
-      res.status(400).json(response);
+      return res.status(400).json(response);
     }
 
     const data = parsedData.data;
@@ -143,9 +148,7 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
 
     //STEP 4: if user not exists return error
     const user = await User.findOne({
-      $or: [
-        { username: usernameOrEmail }, 
-        { email: usernameOrEmail }],
+      $or: [{ username: usernameOrEmail }, { email: usernameOrEmail }],
     });
 
     if (!user) {
@@ -154,21 +157,21 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         message: "Invalid Username or Password",
       };
 
-      res.status(401).json(response);
+      return res.status(401).json(response);
     }
 
     //STEP 5: password check
-    if(typeof data !== "undefined"){
-        const isPasswordCorrect = await user?.comparePassword(data?.password);
+    if (typeof data !== "undefined") {
+      const isPasswordCorrect = await user?.comparePassword(data?.password);
 
-        if (!isPasswordCorrect) {
-          const response: ApiError = {
-            success: false,
-            message: "Invalid Username or Password",
-          };
-    
-          res.status(401).json(response);
-        }
+      if (!isPasswordCorrect) {
+        const response: ApiError = {
+          success: false,
+          message: "Invalid Username or Password",
+        };
+
+        return res.status(401).json(response);
+      }
     }
 
     //step 6: generate accessToken
@@ -181,30 +184,28 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
         message: "Something went wrong",
       };
 
-      res.status(500).json(response);
+      return res.status(500).json(response);
     }
-  
-    const loggedInUser = await User.findById(user?._id).select("-password")
-    
+
+    const loggedInUser = await User.findById(user?._id).select("-password -__v -createdAt -updatedAt");
+
     const options = {
-        maxAge : 604800000,
-        httpOnly: true, 
-        secure: process.env.ENVIRONMENT === "prod"
-    }
+      maxAge: 604800000,
+      httpOnly: true,
+      secure: process.env.ENVIRONMENT === "prod",
+    };
 
     //Step 7: return user
     const response: ApiResponse = {
       success: true,
       message: "User logged in successfully",
-      data : loggedInUser
+      data: loggedInUser,
     };
 
     return res
-    .cookie("accessToken", accessToken, options)
-    .status(200)
-    .json(response);
-
-
+      .cookie("accessToken", accessToken, options)
+      .status(200)
+      .json(response);
   } catch (err) {
     console.error(err);
 
@@ -213,29 +214,61 @@ export const loginUser = async (req: Request, res: Response, next: NextFunction)
       message: "Something went wrong",
       error: err instanceof Error ? err.message : err,
     };
-    res.status(500).json(response);
+    return res.status(500).json(response);
   }
 };
 
-export const logOutUser = async(req: Request, res: Response, next: NextFunction) => {
- try {
-  //if user obj exists
-  const user = req.user;
+export const logOutUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    //if user obj exists
+    const user = req.user;
 
-  if(!user){
-     const response: ApiError = {
+    if (!user) {
+      const response: ApiError = {
         success: false,
         message: "Something went wrong",
       };
 
-      res.status(401).json(response);
+      return res.status(401).json(response);
+    }
+
+    const userId = user?.id as ObjectId;
+
+    //check if user is valid
+    const existingUser = await User.findById(userId)
+      .select("-__v -password -createdAt -updatedAt ")
+      .lean();
+
+    if (!existingUser) {
+      const response: ApiError = {
+        success: false,
+        message: "User does not exists",
+      };
+
+     return res.status(403).json(response);
+    }
+    //should we add a extra check here ?
+    const response: ApiResponse = {
+      success: true,
+      message: "User logged out successfully",
+      data: existingUser,
+    };
+
+    return res.status(201).clearCookie("accessToken").json(response);
+
+    //remove jwt token
+  } catch (err) {
+    console.error(err);
+
+    const response: ApiError = {
+      success: false,
+      message: "Something went wrong",
+      error: err instanceof Error ? err.message : err,
+    };
+   return res.status(500).json(response);
   }
-
-  //check if user is valid 
-
-  //remove jwt token
-  
- } catch (error) {
-  
- }
-}
+};

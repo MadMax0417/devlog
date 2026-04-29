@@ -5,7 +5,9 @@ import { Log } from "../models/Log.model.js";
 import type { ApiResponse } from "../lib/ApiResponse.js";
 import { createLogZodSchema, updateLogZodSchema } from "../schemas/Log.zodschema.js";
 import z from "zod";
-import { parse } from "node:path";
+import type { ObjectId } from "mongoose";
+
+// TODO : add getDeleted Log, restore the deleted one controller in v2
 
 export const getAllLogs = async (
   req: Request,
@@ -15,8 +17,11 @@ export const getAllLogs = async (
   try {
     const user = req.user;
     let isCompleted = req.query.isCompleted as string;
+    let isDeleted = req.query.isDeleted as string;
+
 
     if (!isCompleted) isCompleted = "false";
+    if (!isDeleted) isDeleted = "false";
 
     if (!user) {
       const response: ApiError = {
@@ -25,7 +30,7 @@ export const getAllLogs = async (
       };
       return res.status(401).json(response);
     }
-    const userId = user.id as string;
+    const userId = user.id as ObjectId;
 
     const loggedInUser = await User.findById(userId);
 
@@ -40,6 +45,7 @@ export const getAllLogs = async (
     const allLogs = await Log.find({
       user: userId,
       isCompleted: isCompleted === "true" ? true : false,
+      isDeleted: isDeleted === "false" ? false : true,
     }).lean();
 
     if (!allLogs) {
@@ -76,7 +82,8 @@ export const getSingleLog = async (
   try {
     //get data
     const user = req.user;
-    const logId = req.params;
+    const logId = req.params.id;
+
 
     //check if undefined
     if (!user || !logId) {
@@ -88,9 +95,9 @@ export const getSingleLog = async (
     }
 
     //find if user exists
-    const userId = user.id as string;
+    const userId = user.id as ObjectId;
 
-    const loggedInUser = await User.findById(userId);
+    const loggedInUser = await User.findById(userId); 
 
     if (!loggedInUser) {
       const response: ApiError = {
@@ -104,6 +111,7 @@ export const getSingleLog = async (
     const log = await Log.findOne({
       user: userId,
       _id: logId,
+      isDeleted: false 
     }).lean();
 
     if (!log) {
@@ -152,13 +160,13 @@ export const createLog = async (
 
     if (!body || Object.keys(body).length === 0) {
       const response: ApiError = {
-        success: false,
+      success: false,
         message: "Invalid data",
       };
       return res.status(401).json(response);
     }
     //Step 2.5: check if user exists
-    const userId = user.id as string;
+    const userId = user.id as ObjectId;
 
     const loggedInUser = await User.findById(userId);
 
@@ -228,7 +236,7 @@ export const updateLog = async (
 ) => {
   try {
     const user = req.user;
-    const logId = req.params;
+    const logId = req.params.id;
     const body = req.body;
 
     //check if undefined
@@ -263,18 +271,13 @@ export const updateLog = async (
     }
 
     const data = parsedData.data
-
+    console.log({data})
+    
     //find if user exists
-    const userId = user.id as string;
+    const userId = user.id as ObjectId;
+    
 
-    //can we find like this User find and log together
-    const logWithUser = await User.findOneAndUpdate(
-      {user : userId},
-      {...data},
-      {new: true}
-    ).select("-__v").lean(); 
-
-    /*
+    //check if user exists
     const loggedInUser = await User.findById(userId);
 
     if (!loggedInUser) {
@@ -284,15 +287,20 @@ export const updateLog = async (
       };
       return res.status(404).json(response);
     }
-    //check log 
-  
-     const editedLog = await Log.findOne({
-      user: userId,
-      _id: logId,
-    }).lean();
-    */
 
-     if (!logWithUser) {
+    
+
+    //can we find like this User find and log together
+    const updatedLog = await Log.findOneAndUpdate(
+      {
+        _id : logId,
+        user : userId
+      },
+      {...data},
+      {new: true}
+    );
+
+     if (!updatedLog) {
       const response: ApiError = {
         success: false,
         message: "Error while updating log.",
@@ -304,10 +312,11 @@ export const updateLog = async (
     const response: ApiResponse = {
       success: true,
       message: "Log fetched successfully",
-      data: logWithUser || [],
+      data: updatedLog || [],
     };
 
     return res.status(201).json(response);
+
   } catch (err) {
     console.error(err);
     const response: ApiError = {
@@ -327,7 +336,7 @@ export const deleteLog = async (
   try {
     //get user & id
     const user = req.user;
-    const logId = req.params;
+    const logId = req.params.id;
 
     //check user and id if they are valid
     if (!user || !logId) {
@@ -337,8 +346,9 @@ export const deleteLog = async (
       };
       return res.status(401).json(response);
     }
+
     //check if user exists
-    const userId = user.Id as string;
+    const userId = user.id as ObjectId;
     const existingUser = await User.findById(userId);
 
     if (!existingUser) {
@@ -349,26 +359,16 @@ export const deleteLog = async (
       return res.status(404).json(response);
     }
 
-    // find log and delete it
+    // find log and delete it or should we just update the model ?
 
-    const existingLog = await Log.findOne({
+    const deletedLog = await Log.findOneAndUpdate({
       user: userId,
       _id: logId,
-    });
-
-    if (!existingLog) {
-      const response: ApiError = {
-        success: false,
-        message: "Log does not exist or Invalid Data",
-      };
-      return res.status(404).json(response);
-    }
-
-    const deletedLog = await Log.findOneAndUpdate(
-      { _id: logId, isDeleted: false },
-      { isDeleted: true },
-      { new: true },
-    ).lean();
+      isDeleted: false,
+    },
+    {isDeleted: true},
+    {new: true, lean: true}
+  );
 
     if(!deletedLog){
          const response: ApiError = {
@@ -379,8 +379,6 @@ export const deleteLog = async (
     }
 
 
-    //TODO : We can also add deletedAt in schema 
-
     //sent
      const response: ApiResponse = {
         success: true,
@@ -389,6 +387,7 @@ export const deleteLog = async (
       };
 
       return res.status(201).json(response);
+
   } catch (err) {
     console.error(err);
     const response: ApiError = {

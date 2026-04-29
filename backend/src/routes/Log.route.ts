@@ -7,9 +7,9 @@ const router : Router = express.Router();
 
 
 //Protected logs
-router.get("/", isLoggedIn, getAllLogs ) //get all logs
+router.get("/", isLoggedIn, getAllLogs ) //get all logs 
 router.get("/:id", isLoggedIn, getSingleLog ) //get single log
-router.post("/", isLoggedIn, createLog ) //create new log
+router.post("/", isLoggedIn, createLog ) //create new log 
 router.put("/:id", isLoggedIn, updateLog ) //edit a log
 router.delete("/:id", isLoggedIn, deleteLog ) //delete a log
 

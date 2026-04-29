@@ -9,7 +9,7 @@ export const createLogZodSchema = z.object({
             .min(2, "Goal should be at least 2 characters")
             .max(1000, "Goal should be at most 100 characters")
             .optional(),
-    date:z.date(),
+    date:z.coerce.date(),
     mood:z.enum(Object.values(EMood)).optional(),
     tags: z.string().array().optional(),
     isCompleted: z.coerce.boolean().default(false),
@@ -23,7 +23,7 @@ export const updateLogZodSchema = z.object({
             .min(2, "Goal should be at least 2 characters")
             .max(1000, "Goal should be at most 100 characters")
             .optional(),
-    date:z.date().optional(),
+    date:z.coerce.date().optional(),
     mood:z.enum(Object.values(EMood)).optional(),
     tags: z.string().array().optional(),
     isCompleted: z.coerce.boolean().default(false),

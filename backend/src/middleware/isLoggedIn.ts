@@ -11,25 +11,31 @@ export const isLoggedIn = async (
     //get cookie from accessToken
     const accessToken = req.cookies.accessToken;
 
+
     if (!accessToken) {
+
       const errorResponse: ApiError = {
         success: false,
-        message: "Access token not found",
+        message: "Please log in or invalid token",
       };
-      return res.status(401).json(errorResponse);
+      return res.status(401).json(errorResponse); 
     }
 
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET!);
-    console.log({ decoded });
-    console.log(typeof decoded, "-----type of decoded");
-    req.user = decoded as JwtPayload
+    // console.log({ decoded });
+
+    // console.log(typeof decoded, "-----type of decoded"); //object
+    req.user = decoded as JwtPayload;
+
 
     next();
   } catch (err) {
+
+
     const response: ApiError = {
       success: false,
       message: "Invalid or expired token",
     };
-    res.status(401).json(response);
+    return res.status(401).json(response);
   }
 };
