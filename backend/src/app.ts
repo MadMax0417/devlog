@@ -2,6 +2,7 @@ import express from "express";
 import type { Express, NextFunction, Response, Request } from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 
 const app: Express = express();
 
@@ -10,8 +11,24 @@ dotenv.config({
 });
 
 //TO-DO: add cors here
+const allowedOrigins = [ process.env.DEV_URL!, process.env.PROD_URL!]
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "DELETE", "PUT"],
+  allowedHeaders: ["Content-type", "Authorization"]
+}))
+
+//TO_DO:future update add limiter here 
 
 app.use(express.json({ limit: "50kb" }));
+
+app.use(express.urlencoded({
+  extended: true,
+  limit: "50kb"
+}))
+
 app.use(cookieParser());
 
 //routes
