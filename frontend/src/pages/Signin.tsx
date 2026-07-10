@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
+//import react form 
+
 
 const Signin = () => {
+  // add useForm 
+  // add useEffect 
+  // add zodSchema here 
+
   return (
     <main className="min-h-screen px-6 py-12">
       <section className="mx-auto grid min-h-[calc(100vh-6rem)] max-w-6xl items-center gap-10 lg:grid-cols-2">
@@ -21,7 +27,7 @@ const Signin = () => {
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-gray-900">Sign in</h2>
             <p className="mt-2 text-sm text-gray-500">
-              Use your email and password to continue.
+              Use your email or username and password to continue.
             </p>
           </div>
 
@@ -31,7 +37,7 @@ const Signin = () => {
                 htmlFor="email"
                 className="mb-2 block text-sm font-medium text-gray-700"
               >
-                Email
+                Email or Username
               </label>
               <input
                 id="email"

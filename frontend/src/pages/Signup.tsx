@@ -37,7 +37,22 @@ const Signup = () => {
               <input
                 id="name"
                 type="text"
-                placeholder="Kiran Raut"
+                placeholder="John Doe"
+                className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="username"
+                className="mb-2 block text-sm font-medium text-gray-700"
+              >
+               Username
+              </label>
+              <input
+                id="name"
+                type="text"
+                placeholder="myusername"
                 className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white"
               />
             </div>
@@ -72,7 +87,8 @@ const Signup = () => {
               />
             </div>
 
-            <div>
+{/* TO-DO: should i add confirm password ? */}
+            {/* <div>
               <label
                 htmlFor="confirmPassword"
                 className="mb-2 block text-sm font-medium text-gray-700"
@@ -85,7 +101,7 @@ const Signup = () => {
                 placeholder="••••••••"
                 className="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition placeholder:text-gray-400 focus:border-black focus:bg-white"
               />
-            </div>
+            </div> */}
 
             <label className="flex items-start gap-3 text-sm text-gray-600">
               <input

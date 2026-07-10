@@ -24,12 +24,22 @@ const Navbar = () => {
 
       {/* Conditional rendering based on whether it is logged in*/}
       <div className="flex-center gap-x-6 md:gap-x-10 px-1">
+        <NavLink
+          className={({ isActive }) =>
+            isActive
+              ? "hover:scale-110 text-gray-500 transition-all duration-200"
+              : "hover:scale-110 hover:text-gray-500 transition-all duration-200"
+          }
+          to="/"
+        >
+          Home
+        </NavLink>
         {isLoggedIn ? (
           <NavLink
-            className={
-              ({isActive}) => 
-                      isActive ?  "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200" 
-                               :  "hover:scale-110 hover:text-gray-500 transition-all duration-200"
+            className={({ isActive }) =>
+              isActive
+                ? "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200"
+                : "hover:scale-110 hover:text-gray-500 transition-all duration-200"
             }
             to={"/dashboard"}
           >
@@ -37,10 +47,10 @@ const Navbar = () => {
           </NavLink>
         ) : (
           <NavLink
-            className={
-              ({isActive}) => 
-                      isActive ?  "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200" 
-                               :  "hover:scale-110 hover:text-gray-500 transition-all duration-200"
+            className={({ isActive }) =>
+              isActive
+                ? "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200"
+                : "hover:scale-110 hover:text-gray-500 transition-all duration-200"
             }
             to={"/signin"}
           >
@@ -50,10 +60,10 @@ const Navbar = () => {
 
         {!isLoggedIn && (
           <NavLink
-            className={
-              ({isActive}) => 
-                      isActive ?  "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200" 
-                               :  "hover:scale-110 hover:text-gray-500 transition-all duration-200"
+            className={({ isActive }) =>
+              isActive
+                ? "hover:scale-110 text-gray-500 hover:text-black transition-all duration-200"
+                : "hover:scale-110 hover:text-gray-500 transition-all duration-200"
             }
             to={"/signup"}
           >
